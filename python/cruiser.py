@@ -151,6 +151,8 @@ def getInputCustom():
 
 def handleExit(num):
     if keys['exit'] == num:
+        if isLeftTab: os.chdir(leftTab.cwd)
+        else: os.chdir(rightTab.cwd)
         os.system("/bin/bash")
         exit(0)
 
@@ -163,7 +165,8 @@ def handleDirsMode(tab, nextDirNum):
 
 def checkKeys(tab, nextDirNum):
     if keys['back'] == nextDirNum:
-        tab.cwd = os.path.join(tab.cwd, '..')
+        #tab.cwd = os.path.join(tab.cwd, os.pardir)
+        tab.cwd = os.path.dirname(tab.cwd)
         return True
     if keys['returnprev'] == nextDirNum:
         tab.history.pop() # remove current
