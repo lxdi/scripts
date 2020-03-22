@@ -184,6 +184,7 @@ def handleFilesMode(filesList, inputString):
         inputString = splitted[0].strip()
         commandOnFile = splitted[1]
 
+    inputString = inputString.strip()
     for num in inputString.split(' '):
         if '-' in num:
             numsRange = num.split('-')
