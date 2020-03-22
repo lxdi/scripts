@@ -6,6 +6,7 @@ from utils import filesColors
 from utils import tab
 
 isDirsMode = True
+isLeftTab = True
 
 extenders = {'q':'1', 'w':'2','e':'3','r':'4','t':'5','y':'6','u':'7','i':'8', 'o':'9', 'p':'0'}
 columnWidth = 100
@@ -15,7 +16,8 @@ keys = {
 'exit': '\x18', #ctrl+x
 'multiInput': '\x06', #ctrl+f
 'switchMode': '\x01', #ctrl+a
-'returnprev': '\x02' #ctrl+b
+'returnprev': '\x02', #ctrl+b
+'switchTabs': '\t' #tab
 }
 
 bindings = {
@@ -30,24 +32,32 @@ defaultCommand = "mimeopen -n"
 commandOnFile = defaultCommand
 
 leftTab = tab.Tab()
+rightTab = tab.Tab()
 
 def changeCurrDir():
     global isDirsMode
+    global isLeftTab
     commandOnFile = defaultCommand
-    leftTab.history.append(os.getcwd())
     upperDivisor = '//////////////////////////////////////////////'
     print(("{0:"+str(columnWidth)+"} {1}").format(upperDivisor, upperDivisor))
-    leftTab.curDirsList = []
-    leftTab.curFilesList = []
+
+    if isLeftTab: leftTab.history.append(leftTab.cwd)
+    else: rightTab.history.append(rightTab.cwd)
+
     initLists(leftTab)
-    displayFiles(leftTab.curDirsList, leftTab.curFilesList)
-    printCurrentDir(leftTab)
+    initLists(rightTab)
+    displayFiles(leftTab, rightTab)
+
+    if isLeftTab: printCurrentDir(leftTab)
+    else: printCurrentDir(rightTab)
 
     nextDirNum = getInputCustom()
-    if keys['switchMode'] == nextDirNum: isDirsMode = not isDirsMode
+    if keys['switchTabs'] == nextDirNum: isLeftTab = not isLeftTab
     else:
-        if isDirsMode: handleDirsMode(leftTab, nextDirNum)
-        else: handleFilesMode(leftTab, nextDirNum)
+        if keys['switchMode'] == nextDirNum: isDirsMode = not isDirsMode
+        else:
+            if isDirsMode: handleDirsMode(leftTab if isLeftTab else rightTab, nextDirNum)
+            else: handleFilesMode(leftTab if isLeftTab else rightTab, nextDirNum)
 
     changeCurrDir()
 
@@ -62,12 +72,11 @@ def prevDirsFormat(tab, offset):
             backDir = backDir + "<- %s %s %s" % ("\033[0;36m", tab.history[len(tab.history)-i], "\033[0m")
     return backDir
 
-def displayFiles(curDirs, curFiles):
+def displayFiles(leftTab, rightTab):
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
-    curMerged = mergeLists(curDirs, curFiles, True)
-    prevMerged = []
-    #prevMerged = mergeLists(prevDirs, prevFiles, False)
+    curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False)
+    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False)
 
     maxLen = 0
     if len(curMerged)>len(prevMerged):maxLen = len(curMerged)-1
@@ -107,6 +116,8 @@ def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs):
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
 
 def initLists(tab):
+    tab.curDirsList = []
+    tab.curFilesList = []
     for file in os.listdir(tab.cwd):
         if os.path.isdir(os.path.join(tab.cwd, file)): tab.curDirsList.append(file)
         else: tab.curFilesList.append(file)
@@ -146,7 +157,7 @@ def handleExit(num):
 def handleDirsMode(tab, nextDirNum):
     if not checkKeys(tab, nextDirNum):
         if checkBindings(tab, nextDirNum) == False:
-            if int(nextDirNum)<len(curDirsList):
+            if int(nextDirNum)<len(tab.curDirsList):
                 tab.cwd = os.path.join(tab.cwd, tab.curDirsList[int(nextDirNum)])
             else: print('no such dir')
 
