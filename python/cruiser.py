@@ -3,6 +3,7 @@ import subprocess
 from utils import utils
 from utils import getch
 from utils import filesColors
+from utils import tab
 
 isDirsMode = True
 
@@ -28,46 +29,45 @@ presets = {'video': 'vlc'}
 defaultCommand = "mimeopen -n"
 commandOnFile = defaultCommand
 
-history = []
+leftTab = tab.Tab()
 
 def changeCurrDir():
     global isDirsMode
     commandOnFile = defaultCommand
-    history.append(os.getcwd())
+    leftTab.history.append(os.getcwd())
     upperDivisor = '//////////////////////////////////////////////'
     print(("{0:"+str(columnWidth)+"} {1}").format(upperDivisor, upperDivisor))
-    curDirsList = []
-    curFilesList = []
-    prevDirsList = []
-    prevFilesList = []
-    initLists(curDirsList, curFilesList, prevDirsList, prevFilesList)
-    displayFiles(curDirsList, curFilesList, prevDirsList, prevFilesList)
-    printCurrentDir()
+    leftTab.curDirsList = []
+    leftTab.curFilesList = []
+    initLists(leftTab)
+    displayFiles(leftTab.curDirsList, leftTab.curFilesList)
+    printCurrentDir(leftTab)
 
     nextDirNum = getInputCustom()
     if keys['switchMode'] == nextDirNum: isDirsMode = not isDirsMode
     else:
-        if isDirsMode: handleDirsMode(curDirsList, nextDirNum)
-        else: handleFilesMode(curFilesList, nextDirNum)
+        if isDirsMode: handleDirsMode(leftTab, nextDirNum)
+        else: handleFilesMode(leftTab, nextDirNum)
 
     changeCurrDir()
 
-def printCurrentDir():
-    curDir = "%s %s %s" % ("\033[0;34m", os.getcwd(), "\033[0m")
-    print(("{0} {1}").format(curDir, prevDirsFormat(4)))
+def printCurrentDir(tab):
+    curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
+    print(("{0} {1}").format(curDir, prevDirsFormat(tab, 4)))
 
-def prevDirsFormat(offset):
+def prevDirsFormat(tab, offset):
     backDir = ''
     for i in range(2, offset+2):
-        if len(history)>=i:
-            backDir = backDir + "<- %s %s %s" % ("\033[0;36m", history[len(history)-i], "\033[0m")
+        if len(tab.history)>=i:
+            backDir = backDir + "<- %s %s %s" % ("\033[0;36m", tab.history[len(tab.history)-i], "\033[0m")
     return backDir
 
-def displayFiles(curDirs, curFiles, prevDirs, prevFiles):
+def displayFiles(curDirs, curFiles):
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
     curMerged = mergeLists(curDirs, curFiles, True)
-    prevMerged = mergeLists(prevDirs, prevFiles, False)
+    prevMerged = []
+    #prevMerged = mergeLists(prevDirs, prevFiles, False)
 
     maxLen = 0
     if len(curMerged)>len(prevMerged):maxLen = len(curMerged)-1
@@ -106,22 +106,14 @@ def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs):
             result.append("[%s] %s %s %s" % (entry, color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
 
-
-def initLists(curDirs, curFiles, prevDirs, prevFiles):
-    initListsInPath(curDirs, curFiles, os.getcwd())
-    # if os.getcwd() is not '/':
-    #     initListsInPath(prevDirs, prevFiles, os.path.join(os.getcwd(), '..'))
-    if len(history) > 1:
-        initListsInPath(prevDirs, prevFiles, history[len(history)-2])
-
-def initListsInPath(dirs, files, path):
-    for file in os.listdir(path):
-        if os.path.isdir(os.path.join(path, file)): dirs.append(file)
-        else: files.append(file)
-    dirs.sort(key=lambda x: os.path.getmtime(os.path.join(path, x)))
-    dirs.reverse()
-    files.sort(key=lambda x: os.path.getmtime(os.path.join(path, x)))
-    files.reverse()
+def initLists(tab):
+    for file in os.listdir(tab.cwd):
+        if os.path.isdir(os.path.join(tab.cwd, file)): tab.curDirsList.append(file)
+        else: tab.curFilesList.append(file)
+    tab.curDirsList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
+    tab.curDirsList.reverse()
+    tab.curFilesList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
+    tab.curFilesList.reverse()
 
 def replaceWithExtender(num):
     for key, value in extenders.items():
@@ -151,31 +143,31 @@ def handleExit(num):
         os.system("/bin/bash")
         exit(0)
 
-def handleDirsMode(curDirsList, nextDirNum):
-    if not checkKeys(nextDirNum):
-        if checkBindings(nextDirNum) == False:
+def handleDirsMode(tab, nextDirNum):
+    if not checkKeys(tab, nextDirNum):
+        if checkBindings(tab, nextDirNum) == False:
             if int(nextDirNum)<len(curDirsList):
-                os.chdir(curDirsList[int(nextDirNum)])
+                tab.cwd = os.path.join(tab.cwd, tab.curDirsList[int(nextDirNum)])
             else: print('no such dir')
 
-def checkKeys(nextDirNum):
+def checkKeys(tab, nextDirNum):
     if keys['back'] == nextDirNum:
-        os.chdir('..')
+        tab.cwd = os.path.join(tab.cwd, '..')
         return True
     if keys['returnprev'] == nextDirNum:
-        os.chdir(history.pop()) # remove current
+        tab.history.pop() # remove current
         if len(history) > 0:
-            os.chdir(history.pop())
+            tab.cwd = tab.history.pop()
         return True
     return False
 
-def checkBindings(input):
+def checkBindings(tab, input):
     if input in bindings.keys():
-        os.chdir(bindings[input])
+        tab.cwd = bindings[input]
         return True
     else: return False
 
-def handleFilesMode(filesList, inputString):
+def handleFilesMode(tab, inputString):
     global commandOnFile
     userCommand = False
     if '|' in inputString:
@@ -190,12 +182,12 @@ def handleFilesMode(filesList, inputString):
             numsRange = num.split('-')
             for numFromRange in range(int(numsRange[0]), int(numsRange[1])+1):
                 if not userCommand:
-                    commandOnFile = checkPresets(filesList[numFromRange], commandOnFile)
-                executeCommand(numFromRange, filesList, commandOnFile)
+                    commandOnFile = checkPresets(tab.curFilesList[numFromRange], commandOnFile)
+                executeCommand(tab, numFromRange, commandOnFile)
         else:
             if not userCommand:
-                commandOnFile = checkPresets(filesList[int(num)], commandOnFile)
-            executeCommand(int(num), filesList, commandOnFile)
+                commandOnFile = checkPresets(tab.curFilesList[int(num)], commandOnFile)
+            executeCommand(tab, int(num), commandOnFile)
 
 def checkPresets(file, command):
     type = filesColors.checkType(file)
@@ -203,8 +195,8 @@ def checkPresets(file, command):
         return presets[type]
     else: return command
 
-def executeCommand(num, filesList, command):
-    fileFullPath = os.path.join(os.getcwd(), filesList[num])
+def executeCommand(tab, num, command):
+    fileFullPath = os.path.join(tab.cwd, tab.curFilesList[num])
     fileFullPathEscaped = utils.escapeChars(fileFullPath)
     finalCommand = "%s %s" % (command, fileFullPathEscaped)
 
