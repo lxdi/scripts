@@ -51,7 +51,6 @@ def changeCurrDir():
     print(("{0:"+str(columnWidth)+"} {1}").format(upperDivisor, upperDivisor))
 
     curTab = leftTab if isLeftTab else rightTab
-    curTab.history.append(leftTab.cwd)
 
     initLists(leftTab)
     initLists(rightTab)
@@ -103,7 +102,7 @@ def printCurrentDir(tab):
 
 def prevDirsFormat(tab, offset):
     backDir = ''
-    for i in range(2, offset+2):
+    for i in range(1, offset+2):
         if len(tab.history)>=i:
             backDir = backDir + "<- %s %s %s" % ("\033[0;36m", tab.history[len(tab.history)-i], "\033[0m")
     return backDir
@@ -205,27 +204,20 @@ def handleDirsMode(tab, nextDirNum):
 def checkKeys(tab, nextDirNum):
     if keys['back'] == nextDirNum:
         #tab.cwd = os.path.join(tab.cwd, os.pardir)
-        tab.cwd = os.path.dirname(tab.cwd)
-        tab.cursor = 0
+        tab.changeDir(os.path.dirname(tab.cwd))
         return True
     if keys['returnprev'] == nextDirNum:
-        tab.history.pop() # remove current
-        if len(history) > 0:
-            tab.cwd = tab.history.pop()
-            tab.cursor = 0
+        tab.popHistory()
         return True
     if keys['arrowRight'] == nextDirNum:
         if tab.subcursor >-1: print('todo handle move/copy/delete')
-        else:
-            tab.cwd = os.path.join(tab.cwd, tab.curDirsList[tab.cursor])
-            tab.cursor = 0
+        else: tab.changeDir(os.path.join(tab.cwd, tab.curDirsList[tab.cursor]))
         return True
     return False
 
 def checkBindings(tab, input):
     if input in bindings.keys():
-        tab.cwd = bindings[input]
-        tab.cursor = 0
+        tab.changeDir(bindings[input])
         return True
     else: return False
 
