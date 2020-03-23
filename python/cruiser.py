@@ -18,6 +18,7 @@ keys = {
 'switchMode': '\x01', #ctrl+a
 'returnprev': '\x02', #ctrl+b
 'switchTabs': '\t' #tab
+
 }
 
 substitutions = {
@@ -88,8 +89,8 @@ def prevDirsFormat(tab, offset):
 def displayFiles(leftTab, rightTab):
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
-    curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False)
-    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False)
+    curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False, leftTab.cursor)
+    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False, leftTab.cursor)
 
     maxLen = 0
     if len(curMerged)>len(prevMerged):maxLen = len(curMerged)-1
@@ -108,23 +109,23 @@ def displayFiles(leftTab, rightTab):
                 fileStr = fileStr[:columnWidth-7]+'\033[0m'
         print(("{0:"+str(columnWidth)+"} | {1}").format(dirStr, fileStr))
 
-def mergeLists(dirs, files, isIndex):
+def mergeLists(dirs, files, isIndex, cursor):
         result = []
         if isDirsMode:
-            formatInList(dirs, isIndex, result, isDirsMode, "\033[0;32m", True)
+            formatInList(dirs, isIndex, result, isDirsMode, "\033[0;32m", True, cursor)
             result.append("\033[0;35m ------------------------------------ \033[0m")
-            formatInList(files, False, result, isDirsMode, "\033[0;33m", False)
+            formatInList(files, False, result, isDirsMode, "\033[0;33m", False, cursor)
         else:
-            formatInList(files, isIndex, result, isDirsMode, "\033[0;33m", False)
+            formatInList(files, isIndex, result, isDirsMode, "\033[0;33m", False, cursor)
             result.append("\033[0;35m ------------------------------------ \033[0m")
-            formatInList(dirs, False, result, isDirsMode, "\033[0;32m", True)
+            formatInList(dirs, False, result, isDirsMode, "\033[0;32m", True, cursor)
         return result
 
-def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs):
+def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs, cursor):
     for i in range(0, len(sourceList)):
         if isIndex:
             entry = replaceWithExtender(str(i)) if isUseExtenders else str(i)
-            result.append("[%s] %s %s %s" % (entry, color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
+            result.append("%s[%s] %s %s %s" % ('>' if cursor == i else '', entry, color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
 
 def initLists(tab):
@@ -148,6 +149,7 @@ def getInputCustom():
     nextDirNum = ''
     if isDirsMode:
         nextDirNum = getch.getch()
+        if '\x1b[A' == nextDirNum : print('its up!')
         if nextDirNum == keys['multiInput']:
             nextDirNum = utils.askForInput("Cd to: ")
         if nextDirNum in extenders.keys():
@@ -173,17 +175,20 @@ def handleDirsMode(tab, nextDirNum):
         if checkBindings(tab, nextDirNum) == False:
             if int(nextDirNum)<len(tab.curDirsList):
                 tab.cwd = os.path.join(tab.cwd, tab.curDirsList[int(nextDirNum)])
+                tab.cursor = 0
             else: print('no such dir')
 
 def checkKeys(tab, nextDirNum):
     if keys['back'] == nextDirNum:
         #tab.cwd = os.path.join(tab.cwd, os.pardir)
         tab.cwd = os.path.dirname(tab.cwd)
+        tab.cursor = 0
         return True
     if keys['returnprev'] == nextDirNum:
         tab.history.pop() # remove current
         if len(history) > 0:
             tab.cwd = tab.history.pop()
+            tab.cursor = 0
         return True
     return False
 
