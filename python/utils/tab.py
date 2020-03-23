@@ -19,3 +19,4 @@ class Tab():
         if len(self.history) > 0:
             self.cwd = self.history.pop()
             self.cursor = 0
+            self.dirtyLists = True
