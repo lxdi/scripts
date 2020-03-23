@@ -153,15 +153,17 @@ def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs, cur
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
 
 def initLists(tab):
-    tab.curDirsList = []
-    tab.curFilesList = []
-    for file in os.listdir(tab.cwd):
-        if os.path.isdir(os.path.join(tab.cwd, file)): tab.curDirsList.append(file)
-        else: tab.curFilesList.append(file)
-    tab.curDirsList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
-    tab.curDirsList.reverse()
-    tab.curFilesList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
-    tab.curFilesList.reverse()
+    if tab.dirtyLists:
+        tab.curDirsList = []
+        tab.curFilesList = []
+        for file in os.listdir(tab.cwd):
+            if os.path.isdir(os.path.join(tab.cwd, file)): tab.curDirsList.append(file)
+            else: tab.curFilesList.append(file)
+        tab.curDirsList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
+        tab.curDirsList.reverse()
+        tab.curFilesList.sort(key=lambda x: os.path.getmtime(os.path.join(tab.cwd, x)))
+        tab.curFilesList.reverse()
+        tab.dirtyLists = False
 
 def replaceWithExtender(num):
     for key, value in extenders.items():
@@ -196,9 +198,7 @@ def handleExit(num):
 def handleDirsMode(tab, nextDirNum):
     if not checkKeys(tab, nextDirNum):
         if checkBindings(tab, nextDirNum) == False:
-            if int(nextDirNum)<len(tab.curDirsList):
-                tab.cwd = os.path.join(tab.cwd, tab.curDirsList[int(nextDirNum)])
-                tab.cursor = 0
+            if int(nextDirNum)<len(tab.curDirsList): tab.changeDir(os.path.join(tab.cwd, tab.curDirsList[int(nextDirNum)]))
             else: print('no such dir')
 
 def checkKeys(tab, nextDirNum):
