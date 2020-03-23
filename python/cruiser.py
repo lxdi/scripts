@@ -75,13 +75,27 @@ def handleSwitches(nextDirNum, tab):
         isDirsMode = not isDirsMode
         return True
     if keys['arrowUp'] == nextDirNum:
-        tab.cursor = tab.cursor + 1
+        if tab.subcursor >-1: tab.subcursor = changeCursor(tab.subcursor, 2, True)
+        else: tab.cursor = changeCursor(tab.cursor, len(tab.curDirsList)-1, True)
         return True
     if keys['arrowDown'] == nextDirNum:
-        if tab.cursor > 0:
-            tab.cursor = tab.cursor - 1
+        if tab.subcursor >-1: tab.subcursor = changeCursor(tab.subcursor, 2, False)
+        else: tab.cursor = changeCursor(tab.cursor, len(tab.curDirsList)-1, False)
+        return True
+    if keys['arrowLeft'] == nextDirNum:
+        if tab.subcursor == -1: tab.subcursor = 0
+        else: tab.subcursor = -1
         return True
     return False
+
+def changeCursor(cursorInit, maxNum, isAugment):
+    if isAugment:
+        if cursorInit == maxNum: return maxNum
+        else: return cursorInit + 1
+    else:
+        if cursorInit == 0: return 0
+        else: return cursorInit - 1
+
 
 def printCurrentDir(tab):
     curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
@@ -97,8 +111,8 @@ def prevDirsFormat(tab, offset):
 def displayFiles(leftTab, rightTab):
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
-    curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False, leftTab.cursor)
-    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False, rightTab.cursor)
+    curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False, leftTab.cursor, leftTab.subcursor)
+    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False, rightTab.cursor, rightTab.subcursor)
 
     maxLen = 0
     if len(curMerged)>len(prevMerged):maxLen = len(curMerged)-1
@@ -117,21 +131,24 @@ def displayFiles(leftTab, rightTab):
                 fileStr = fileStr[:columnWidth-7]+'\033[0m'
         print(("{0:"+str(columnWidth)+"} | {1}").format(dirStr, fileStr))
 
-def mergeLists(dirs, files, isIndex, cursor):
+def mergeLists(dirs, files, isIndex, cursor, subcursor):
         result = []
         if isDirsMode:
-            formatInList(dirs, isIndex, result, isDirsMode, "\033[0;32m", True, cursor)
+            formatInList(dirs, isIndex, result, isDirsMode, "\033[0;32m", True, cursor, subcursor)
             result.append("\033[0;35m ------------------------------------ \033[0m")
-            formatInList(files, False, result, isDirsMode, "\033[0;33m", False, cursor)
+            formatInList(files, False, result, isDirsMode, "\033[0;33m", False, cursor, subcursor)
         else:
-            formatInList(files, isIndex, result, isDirsMode, "\033[0;33m", False, cursor)
+            formatInList(files, isIndex, result, isDirsMode, "\033[0;33m", False, cursor, subcursor)
             result.append("\033[0;35m ------------------------------------ \033[0m")
-            formatInList(dirs, False, result, isDirsMode, "\033[0;32m", True, cursor)
+            formatInList(dirs, False, result, isDirsMode, "\033[0;32m", True, cursor, subcursor)
         return result
 
-def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs, cursor):
+def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs, cursor, subcursor):
     for i in range(0, len(sourceList)):
         if isIndex:
+            if cursor == i and subcursor > -1:
+                for j, subEntry in enumerate(['Copy', 'Move', 'Delete']):
+                    result.append("  \033[0;35m %s| %s | \033[0m" % ('>' if j==subcursor else '',  subEntry))
             entry = replaceWithExtender(str(i)) if isUseExtenders else str(i)
             result.append("%s[%s] %s %s %s" % ('>' if cursor == i else '', entry, color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
@@ -198,14 +215,17 @@ def checkKeys(tab, nextDirNum):
             tab.cursor = 0
         return True
     if keys['arrowRight'] == nextDirNum:
-        tab.cwd = os.path.join(tab.cwd, tab.curDirsList[tab.cursor])
-        tab.cursor = 0
+        if tab.subcursor >-1: print('todo handle move/copy/delete')
+        else:
+            tab.cwd = os.path.join(tab.cwd, tab.curDirsList[tab.cursor])
+            tab.cursor = 0
         return True
     return False
 
 def checkBindings(tab, input):
     if input in bindings.keys():
         tab.cwd = bindings[input]
+        tab.cursor = 0
         return True
     else: return False
 
