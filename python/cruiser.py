@@ -143,11 +143,12 @@ def mergeLists(dirs, files, isIndex, cursor, subcursor):
         return result
 
 def formatInList(sourceList, isIndex, result, isUseExtenders, color, isDirs, cursor, subcursor):
-    for i in range(0, len(sourceList)):
+    edge = 50
+    for i in range(0, len(sourceList) if len(sourceList)<edge else edge ):
         if isIndex:
             if cursor == i and subcursor > -1:
                 for j, subEntry in enumerate(['Copy', 'Move', 'Delete']):
-                    result.append("  \033[0;35m %s| %s | \033[0m" % ('>' if j==subcursor else '',  subEntry))
+                    result.append("  \033[0;35m %s| %s |%s \033[0m" % ('>' if j==subcursor else ' ',  subEntry, '<' if j==subcursor else ' '))
             entry = replaceWithExtender(str(i)) if isUseExtenders else str(i)
             result.append("%s[%s] %s %s %s" % ('>' if cursor == i else '', entry, color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
         else: result.append("%s %s %s" % (color if isDirs else filesColors.getColor(sourceList[i]),  sourceList[i], "\033[0m"))
