@@ -35,8 +35,7 @@ leftTab = tab.Tab()
 rightTab = tab.Tab()
 
 def changeCurrDir():
-    global isDirsMode
-    global isLeftTab
+    os.system('clear')
     commandOnFile = defaultCommand
     upperDivisor = '//////////////////////////////////////////////'
     print(("{0:"+str(columnWidth)+"} {1}").format(upperDivisor, upperDivisor))
@@ -52,14 +51,22 @@ def changeCurrDir():
     else: printCurrentDir(rightTab)
 
     nextDirNum = getInputCustom()
-    if keys['switchTabs'] == nextDirNum: isLeftTab = not isLeftTab
-    else:
-        if keys['switchMode'] == nextDirNum: isDirsMode = not isDirsMode
-        else:
-            if isDirsMode: handleDirsMode(leftTab if isLeftTab else rightTab, nextDirNum)
-            else: handleFilesMode(leftTab if isLeftTab else rightTab, nextDirNum)
+    if not handleSwitches(nextDirNum):
+        if isDirsMode: handleDirsMode(leftTab if isLeftTab else rightTab, nextDirNum)
+        else: handleFilesMode(leftTab if isLeftTab else rightTab, nextDirNum)
 
     changeCurrDir()
+
+def handleSwitches(nextDirNum):
+    global isDirsMode
+    global isLeftTab
+    if keys['switchTabs'] == nextDirNum:
+        isLeftTab = not isLeftTab
+        return True
+    if keys['switchMode'] == nextDirNum:
+        isDirsMode = not isDirsMode
+        return True
+    return False
 
 def printCurrentDir(tab):
     curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
