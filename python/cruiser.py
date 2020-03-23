@@ -15,10 +15,13 @@ keys = {
 'back': '-',
 'exit': '\x18', #ctrl+x
 'multiInput': '\x06', #ctrl+f
-'switchMode': '\x01', #ctrl+a
+'switchMode': '\r', #'\x01', #ctrl+a
 'returnprev': '\x02', #ctrl+b
-'switchTabs': '\t' #tab
-
+'switchTabs': '\t', #tab
+'arrowUp': '\x1b[A',
+'arrowDown': '\x1b[B',
+'arrowRight': '\x1b[C',
+'arrowLeft': '\x1b[D',
 }
 
 substitutions = {
@@ -47,24 +50,22 @@ def changeCurrDir():
     upperDivisor = '//////////////////////////////////////////////'
     print(("{0:"+str(columnWidth)+"} {1}").format(upperDivisor, upperDivisor))
 
-    if isLeftTab: leftTab.history.append(leftTab.cwd)
-    else: rightTab.history.append(rightTab.cwd)
+    curTab = leftTab if isLeftTab else rightTab
+    curTab.history.append(leftTab.cwd)
 
     initLists(leftTab)
     initLists(rightTab)
     displayFiles(leftTab, rightTab)
-
-    if isLeftTab: printCurrentDir(leftTab)
-    else: printCurrentDir(rightTab)
+    printCurrentDir(curTab)
 
     nextDirNum = getInputCustom()
-    if not handleSwitches(nextDirNum):
+    if not handleSwitches(nextDirNum, curTab):
         if isDirsMode: handleDirsMode(leftTab if isLeftTab else rightTab, nextDirNum)
         else: handleFilesMode(leftTab if isLeftTab else rightTab, nextDirNum)
 
     changeCurrDir()
 
-def handleSwitches(nextDirNum):
+def handleSwitches(nextDirNum, tab):
     global isDirsMode
     global isLeftTab
     if keys['switchTabs'] == nextDirNum:
@@ -72,6 +73,13 @@ def handleSwitches(nextDirNum):
         return True
     if keys['switchMode'] == nextDirNum:
         isDirsMode = not isDirsMode
+        return True
+    if keys['arrowUp'] == nextDirNum:
+        tab.cursor = tab.cursor + 1
+        return True
+    if keys['arrowDown'] == nextDirNum:
+        if tab.cursor > 0:
+            tab.cursor = tab.cursor - 1
         return True
     return False
 
@@ -90,7 +98,7 @@ def displayFiles(leftTab, rightTab):
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
     curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False, leftTab.cursor)
-    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False, leftTab.cursor)
+    prevMerged = mergeLists(rightTab.curDirsList, rightTab.curFilesList, True if not isLeftTab else False, rightTab.cursor)
 
     maxLen = 0
     if len(curMerged)>len(prevMerged):maxLen = len(curMerged)-1
@@ -149,7 +157,6 @@ def getInputCustom():
     nextDirNum = ''
     if isDirsMode:
         nextDirNum = getch.getch()
-        if '\x1b[A' == nextDirNum : print('its up!')
         if nextDirNum == keys['multiInput']:
             nextDirNum = utils.askForInput("Cd to: ")
         if nextDirNum in extenders.keys():
@@ -189,6 +196,10 @@ def checkKeys(tab, nextDirNum):
         if len(history) > 0:
             tab.cwd = tab.history.pop()
             tab.cursor = 0
+        return True
+    if keys['arrowRight'] == nextDirNum:
+        tab.cwd = os.path.join(tab.cwd, tab.curDirsList[tab.cursor])
+        tab.cursor = 0
         return True
     return False
 

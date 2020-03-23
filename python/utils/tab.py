@@ -5,3 +5,4 @@ class Tab():
         self.history = []
         self.cwd = os.getcwd()
         self.cursor = 0
+        self.subcursor = 0
