@@ -20,6 +20,12 @@ keys = {
 'switchTabs': '\t' #tab
 }
 
+substitutions = {
+    'leftTabDir': '$dl',
+    'rightTabDir': '$dr',
+    'fileName': '$f',
+}
+
 bindings = {
 'h': '/home/alex',
 'd': '/home/alex/Downloads',
@@ -104,7 +110,6 @@ def displayFiles(leftTab, rightTab):
 
 def mergeLists(dirs, files, isIndex):
         result = []
-
         if isDirsMode:
             formatInList(dirs, isIndex, result, isDirsMode, "\033[0;32m", True)
             result.append("\033[0;35m ------------------------------------ \033[0m")
@@ -217,11 +222,28 @@ def checkPresets(file, command):
     else: return command
 
 def executeCommand(tab, num, command):
-    fileFullPath = os.path.join(tab.cwd, tab.curFilesList[num])
-    fileFullPathEscaped = utils.escapeChars(fileFullPath)
-    finalCommand = "%s %s" % (command, fileFullPathEscaped)
+    finalCommand = handleSubstitutions(tab, num, command)
+    if finalCommand is None:
+        fileFullPath = os.path.join(tab.cwd, tab.curFilesList[num])
+        fileFullPathEscaped = utils.escapeChars(fileFullPath)
+        finalCommand = "%s %s" % (command, fileFullPathEscaped)
 
     print('Execute: ', finalCommand)
     process = subprocess.Popen([finalCommand], shell=True)
+
+def handleSubstitutions(tab, num, command):
+    result = False
+    finalCommand = command
+    if substitutions['fileName'] in finalCommand:
+        result = True
+        finalCommand = finalCommand.replace(substitutions['fileName'], utils.escapeChars(tab.curFilesList[num]))
+    if substitutions['leftTabDir'] in finalCommand:
+        result = True
+        finalCommand = finalCommand.replace(substitutions['leftTabDir'], utils.escapeChars(leftTab.cwd))
+    if substitutions['rightTabDir'] in finalCommand:
+        result = True
+        finalCommand = finalCommand.replace(substitutions['rightTabDir'], utils.escapeChars(rightTab.cwd))
+    if result: return finalCommand
+    else: return None
 
 changeCurrDir()
