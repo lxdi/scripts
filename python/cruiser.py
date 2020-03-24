@@ -183,7 +183,8 @@ def getInputCustom():
         if nextDirNum == '\n':
             nextDirNum = keys['switchMode']
     else:
-        nextDirNum = utils.askForInput('Choose file(s): ')
+        print('Choose file(s): ', end='', flush=True)
+        nextDirNum = getch.getch(mode = 'multiChar') #utils.askForInput('Choose file(s): ')
         if nextDirNum.lower() == "":
             nextDirNum = keys['switchMode']
     handleExit(nextDirNum)
