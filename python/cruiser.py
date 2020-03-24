@@ -12,7 +12,7 @@ extenders = {'q':'1', 'w':'2','e':'3','r':'4','t':'5','y':'6','u':'7','i':'8', '
 columnWidth = 100
 
 keys = {
-'back': '-',
+'minus': '-',
 'exit': '\x18', #ctrl+x
 'multiInput': '\x06', #ctrl+f
 'switchMode': '\r', #'\x01', #ctrl+a
@@ -81,7 +81,7 @@ def handleSwitches(nextDirNum, tab):
         if tab.subcursor >-1: tab.subcursor = changeCursor(tab.subcursor, 2, False)
         else: tab.cursor = changeCursor(tab.cursor, len(tab.curDirsList)-1, False)
         return True
-    if keys['arrowLeft'] == nextDirNum:
+    if keys['minus'] == nextDirNum:
         if tab.subcursor == -1: tab.subcursor = 0
         else: tab.subcursor = -1
         return True
@@ -203,7 +203,7 @@ def handleDirsMode(tab, nextDirNum):
             else: print('no such dir')
 
 def checkKeys(tab, nextDirNum):
-    if keys['back'] == nextDirNum:
+    if keys['arrowLeft'] == nextDirNum:
         #tab.cwd = os.path.join(tab.cwd, os.pardir)
         tab.changeDir(os.path.dirname(tab.cwd))
         return True
