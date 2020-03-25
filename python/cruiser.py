@@ -33,7 +33,8 @@ substitutions = {
 bindings = {
 'h': '/home/alex',
 'd': '/home/alex/Downloads',
-'a': '/home/alex/Projects'
+'a': '/home/alex/Projects',
+'g': '/home/alex/google-drive'
 }
 
 presets = {'video': 'vlc'}
@@ -54,7 +55,7 @@ def changeCurrDir():
 
     initLists(leftTab)
     initLists(rightTab)
-    displayFiles(leftTab, rightTab)
+    displayFiles()
     printCurrentDir(curTab)
 
     nextDirNum = getInputCustom()
@@ -63,6 +64,11 @@ def changeCurrDir():
         else: handleFilesMode(leftTab if isLeftTab else rightTab, nextDirNum)
 
     changeCurrDir()
+
+def printCurrentDir(tab):
+    curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
+    #print(("{0} {1}").format(curDir, prevDirsFormat(tab, 4)))
+    print(("{0}").format(curDir))
 
 def handleSwitches(nextDirNum, tab):
     global isDirsMode
@@ -96,10 +102,6 @@ def changeCursor(cursorInit, maxNum, isAugment):
         else: return cursorInit - 1
 
 
-def printCurrentDir(tab):
-    curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
-    print(("{0} {1}").format(curDir, prevDirsFormat(tab, 4)))
-
 def prevDirsFormat(tab, offset):
     backDir = ''
     for i in range(1, offset+2):
@@ -107,7 +109,7 @@ def prevDirsFormat(tab, offset):
             backDir = backDir + "<- %s %s %s" % ("\033[0;36m", tab.history[len(tab.history)-i], "\033[0m")
     return backDir
 
-def displayFiles(leftTab, rightTab):
+def displayFiles():
     # for e in mergeLists(dirsList, filesList):
     #     print(e)
     curMerged = mergeLists(leftTab.curDirsList, leftTab.curFilesList, True if isLeftTab else False, leftTab.cursor, leftTab.subcursor)
@@ -128,7 +130,7 @@ def displayFiles(leftTab, rightTab):
             fileStr = prevMerged[i]
             if len(fileStr)>columnWidth-7:
                 fileStr = fileStr[:columnWidth-7]+'\033[0m'
-        print(("{0:"+str(columnWidth)+"} | {1}").format(dirStr, fileStr))
+        print(("{0:"+str(columnWidth)+"} {1} {2}").format(dirStr, '<' if isLeftTab else '>', fileStr))
 
 def mergeLists(dirs, files, isIndex, cursor, subcursor):
         result = []
