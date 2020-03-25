@@ -68,7 +68,7 @@ def changeCurrDir():
 def printCurrentDir(tab):
     curDir = "%s %s %s" % ("\033[0;34m", tab.cwd, "\033[0m")
     #print(("{0} {1}").format(curDir, prevDirsFormat(tab, 4)))
-    print(("{0}").format(curDir))
+    print(("\033[0;35m{0}\033[0m: {1}").format('Dirs mode' if isDirsMode else 'Files mode', curDir))
 
 def handleSwitches(nextDirNum, tab):
     global isDirsMode

@@ -24,7 +24,7 @@ class _GetchUnix:
             while True:
                 ch = self.getCh(sys)
                 if mode == 'multiChar':
-                    if '\x1b' not in ch and '\x7f' not in ch and '\r' not in ch:
+                    if '\x1b' not in ch and '\x7f' not in ch and '\r' not in ch and '\t' not in ch and '\x18' not in ch:
                         print(ch, end='', flush=True)
                         result = result+ch
                     if ch == '\x7f' and len(result)>0:
@@ -32,6 +32,12 @@ class _GetchUnix:
                         result = result[:len(result)-1]
                     if '\r' in ch: break
                     if '\x1b' in ch:
+                        result = ch
+                        break
+                    if '\t' in ch:
+                        result = ch
+                        break
+                    if '\x18' in ch:
                         result = ch
                         break
                 else:
