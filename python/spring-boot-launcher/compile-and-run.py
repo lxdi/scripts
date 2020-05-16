@@ -1,7 +1,7 @@
 import subprocess
 import os
 
-version = "1.0"
+version = "1.1"
 print("Script version: %s" % version)
 
 pidFileName = 'pid.file'
@@ -10,7 +10,9 @@ if os.path.isfile(pidFileName):
 	for line in open(pidFileName):
 		pid = line
 	shutdownCmd = 'kill %s' % pid
-	subprocess.Popen(shutdownCmd, shell=True)
+	shutdownprocess = subprocess.Popen(shutdownCmd, shell=True)
+	shutdownprocess.wait()
+	os.remove(pidFileName)
 	print('Shutdown: done')
 
 
@@ -23,7 +25,7 @@ for line in process.stdout:
 process.wait()
 os.chdir(initDir)
 
-debugPort = '5007'
+debugPort = '5005'
 debugOption = '-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=%s' % debugPort
 shutdownOption = '& echo $! > ./%s' % pidFileName
 warPath = os.path.join(os.getcwd(), '..', 'backend', 'build', 'libs', 'ROOT.jar')
