@@ -10,6 +10,7 @@ import platform
 pwd = "admin"
 host = "localhost:8080"
 sleepSc = 1
+backOffsetSec = 10
 
 def getMetadata():
     url = f"http://:{pwd}@{host}/requests/status.xml"
@@ -20,7 +21,8 @@ def getTime(xml):
     timeEl = ET.fromstring(xml).find('time')
 
     if timeEl is not None:
-        return formatSeconds(int(timeEl.text), 'withSeconds_full')
+        secs = int(timeEl.text) - backOffsetSec
+        return formatSeconds(secs, 'withSeconds_full')
 
 def formatSeconds(s, formatType):
     match formatType:
@@ -51,4 +53,4 @@ while True:
     cursor = getTime(getMetadata())
     copyToClipboard(cursor)
     time.sleep(sleepSc)
-    #print(f"Current time: {cursor}")
+    print(f"Current time: {cursor}")
