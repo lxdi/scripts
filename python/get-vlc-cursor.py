@@ -20,8 +20,12 @@ backOffsetSec = 10
 
 def getMetadata():
     url = f"http://:{pwd}@{host}/requests/status.xml"
-    response = requests.get(url)
-    return response.text
+    try:
+        response = requests.get(url)
+        return response.text
+    except Exception as e:
+        print(f'Error while reaching the server {e}')
+    
 
 def getTime(xml):
     timeEl = ET.fromstring(xml).find('time')
@@ -56,9 +60,14 @@ def copyToClipBoardMac(text):
     subprocess.run("pbcopy", text=True, input=text)
 
 while True:
-    cursor = getTime(getMetadata())
-    copyToClipboard(cursor)
     time.sleep(sleepSc)
+    metadata = getMetadata()
+
+    if metadata is None:
+        continue
+
+    cursor = getTime(metadata)
+    copyToClipboard(cursor)
 
     if debug == True:
         print(f"Current time: {cursor}")
