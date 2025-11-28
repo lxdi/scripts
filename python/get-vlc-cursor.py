@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from subprocess import Popen, PIPE
 import subprocess
 import time
+import platform
 
 
 pwd = "admin"
@@ -30,6 +31,13 @@ def formatSeconds(s, formatType):
         case _:
             return '{:02}:{:02}'.format(s//3600, s%3600//60)
 
+def copyToClipboard(text):
+    match platform.system():
+        case "Linux":
+            return copyToClipBoardLinux(text)
+        case "Darwin":
+            return copyToClipBoardMac(text)
+
 
 def copyToClipBoardLinux(text):
     p = Popen(['xsel','-bi'], stdin=PIPE)
@@ -41,6 +49,6 @@ def copyToClipBoardMac(text):
 
 while True:
     cursor = getTime(getMetadata())
-    copyToClipBoardMac(cursor)
+    copyToClipboard(cursor)
     time.sleep(sleepSc)
     #print(f"Current time: {cursor}")
