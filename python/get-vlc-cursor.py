@@ -5,7 +5,13 @@ from subprocess import Popen, PIPE
 import subprocess
 import time
 import platform
+import sys
 
+debug = False
+
+for arg in sys.argv[1:]:
+    if arg == '-d':
+        debug = True
 
 pwd = "admin"
 host = "localhost:8080"
@@ -53,4 +59,6 @@ while True:
     cursor = getTime(getMetadata())
     copyToClipboard(cursor)
     time.sleep(sleepSc)
-    print(f"Current time: {cursor}")
+
+    if debug == True:
+        print(f"Current time: {cursor}")
