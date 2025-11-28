@@ -1,27 +1,46 @@
 import requests
 import xml.etree.ElementTree as ET
-import pyperclip
+#import pyperclip
 from subprocess import Popen, PIPE
+import subprocess
+import time
 
 
 pwd = "admin"
 host = "localhost:8080"
+sleepSc = 1
+
+def getMetadata():
+    url = f"http://:{pwd}@{host}/requests/status.xml"
+    response = requests.get(url)
+    return response.text
+
+def getTime(xml):
+    timeEl = ET.fromstring(xml).find('time')
+
+    if timeEl is not None:
+        return formatSeconds(int(timeEl.text), 'withSeconds_full')
+
+def formatSeconds(s, formatType):
+    match formatType:
+        case 'withSeconds':
+            return '{:02}:{:02}:{:02}'.format(s//3600, s%3600//60, s%60)
+        case 'withSeconds_full':
+            return '{:02}:{:02}:{:02} - '.format(s//3600, s%3600//60, s%60)
+        case _:
+            return '{:02}:{:02}'.format(s//3600, s%3600//60)
 
 
-url = f"http://:{pwd}@{host}/requests/status.xml"
-response = requests.get(url)
-
-#print(response.text)
-
-root = ET.fromstring(response.text)
-
-timeEl = root.find('time')
-
-if timeEl is not None:
-    s = int(timeEl.text)
-    timeFormatted = '{:02}:{:02}'.format(s//3600, s%3600//60)
-    #pyperclip.copy("test")
-    #subprocess.run("pbcopy", text=True, input=timeFormatted)
+def copyToClipBoardLinux(text):
     p = Popen(['xsel','-bi'], stdin=PIPE)
-    p.communicate(input=timeFormatted.encode())
-    print(f"Current time: {timeFormatted}")
+    p.communicate(input=text.encode())
+
+def copyToClipBoardMac(text):
+    #pyperclip.copy("test")
+    subprocess.run("pbcopy", text=True, input=text)
+
+while True:
+    cursor = getTime(getMetadata())
+    copyToClipBoardMac(cursor)
+    time.sleep(sleepSc)
+    #print(f"Current time: {cursor}")
